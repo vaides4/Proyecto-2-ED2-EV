@@ -1,0 +1,109 @@
+#include <Arduino.h>
+#include "driver/ledc.h"
+#include "config.h"
+
+//interrupciones
+portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
+
+//Sensor de Temperatura
+int temp = 0;
+
+//Leds
+#define ledRojo 26
+#define ledAmarillo 25
+#define ledVerde 33
+
+//display
+#define a 18
+#define b 23
+#define c 14
+#define d 13
+#define e 15
+#define f 19
+#define g 27
+#define p 12
+#define d1 5
+#define d2 21
+#define d3 22
+
+//Servo
+#define servoPin 2
+
+//PWM
+#define canalPWM 9
+
+//Frecuencia PWM
+#define freqPWM 50
+
+//Resolución (bits)
+#define resPWM 10
+
+//Interrupción motor
+struct Boton1{
+  const uint8_t boton1;
+  bool pressed;
+  bool lastState;
+};
+Boton1 BOT1 = {35, false, false};
+
+//variables de handle interrupcion
+void IRAM_ATTR handle_boton(){
+  portENTER_CRITICAL_ISR(&mux);
+  BOT1.pressed = true;
+  portEXIT_CRITICAL_ISR(&mux);
+}
+
+//creación de funciones PWM y ADC
+void initPWM(void);
+void setupAnalog(void);
+
+
+void setup() {
+  // start the serial connection
+  Serial.begin(115200);
+
+  // wait for serial monitor to open
+  while(! Serial);
+
+  Serial.print("Connecting to Adafruit IO");
+
+  // connect to io.adafruit.com
+  io.connect();
+
+  // wait for a connection
+  while(io.status() < AIO_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+
+  // we are connected
+  Serial.println();
+  Serial.println(io.statusText());
+
+  //función PWM
+  initPWM();
+
+  //setup de lectura ADC
+  setupAnalog();
+
+  //Entradas botones
+  //entradas botones
+  pinMode(BOT1.boton1, INPUT_PULLUP);
+  attachInterrupt(BOT1.boton1, handle_boton, RISING);
+
+}
+
+void loop() {
+  io.run();
+
+}
+
+void initPWM(void){
+  ledcSetup(canalPWM, freqPWM, resPWM);
+  ledcAttachPin(servoPin, canalPWM);
+}
+
+void setupAnalog(void){
+  analogSetWidth(12);
+  analogSetAttenuation(ADC_11db);
+}

@@ -1,0 +1,10 @@
+#define IO_USERNAME  "vaides4"
+#define IO_KEY       "aio_eLdJ194EGPTuicVC8qiPj3sTSzAJ"
+
+//se utilizo el internet de una compañera
+#define WIFI_SSID "iPhone de Marcela"
+#define WIFI_PASS "marce2003"
+
+#include "AdafruitIO_WiFi.h"
+
+AdafruitIO_WiFi io(IO_USERNAME, IO_KEY, WIFI_SSID, WIFI_PASS);

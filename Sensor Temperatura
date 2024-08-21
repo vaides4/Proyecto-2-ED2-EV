@@ -2,18 +2,22 @@
 #include "driver/ledc.h"
 #include "config.h"
 
-//interrupciones
+// interrupciones
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 
-//Sensor de Temperatura
-int temp = 0;
+// Sensor de Temperatura
+float temp_mV = 0;
+float temp_exacta = 0;
+float temp_final = 0;
 
-//Leds
+// Leds
 #define ledRojo 26
 #define ledAmarillo 25
 #define ledVerde 33
 
-//display
+#define temp 4
+
+// display
 #define a 18
 #define b 23
 #define c 14
@@ -26,84 +30,218 @@ int temp = 0;
 #define d2 21
 #define d3 22
 
-//Servo
+// Servo
 #define servoPin 2
 
-//PWM
+// PWM
 #define canalPWM 9
+#define canalPWMRojo 8
+#define canalPWMVerde 7
+#define canalPWMAmarillo 6
 
-//Frecuencia PWM
+// Frecuencia PWM
 #define freqPWM 50
 
-//Resolución (bits)
+// Resolución (bits)
 #define resPWM 10
 
-//Interrupción motor
-struct Boton1{
+// array de pines de cada segmento y un byte donde se encuentran las combinaciones de cada numero del 0-9
+int valorPin1[7] = {18, 23, 14, 13, 15, 19, 27};
+byte valoresSeg[10][7] = {
+    {1, 1, 1, 1, 1, 1, 0}, // 0
+    {0, 1, 1, 0, 0, 0, 0}, // 1
+    {1, 1, 0, 1, 1, 0, 1}, // 2
+    {1, 1, 1, 1, 0, 0, 1}, // 3
+    {0, 1, 1, 0, 0, 1, 1}, // 4
+    {1, 0, 1, 1, 0, 1, 1}, // 5
+    {1, 0, 1, 1, 1, 1, 0}, // 6
+    {1, 1, 1, 0, 0, 0, 0}, // 7
+    {1, 1, 1, 1, 1, 1, 0}, // 8
+    {1, 1, 1, 0, 0, 1, 1}, // 9
+};
+int n = 0;
+
+// valores a los que se moverá el servo
+int servoPosition[] = {51, 77, 128};
+int z = 0;
+
+// Interrupción motor
+struct Boton1
+{
   const uint8_t boton1;
   bool pressed;
   bool lastState;
 };
 Boton1 BOT1 = {35, false, false};
 
-//variables de handle interrupcion
-void IRAM_ATTR handle_boton(){
+// variables de handle interrupcion
+void IRAM_ATTR handle_boton()
+{
   portENTER_CRITICAL_ISR(&mux);
   BOT1.pressed = true;
   portEXIT_CRITICAL_ISR(&mux);
 }
 
-//creación de funciones PWM y ADC
+// creación de funciones PWM y ADC
 void initPWM(void);
-void setupAnalog(void);
+void initPWMRojo(void);
+void initPWMAmarillo(void);
+void initPWMVerde(void);
 
 
-void setup() {
+
+// funcion para mostrar cada numero con su display
+void mostrarDigito(int numero);
+
+void setup()
+{
   // start the serial connection
   Serial.begin(115200);
 
   // wait for serial monitor to open
-  while(! Serial);
+  // while(! Serial);
 
   Serial.print("Connecting to Adafruit IO");
 
   // connect to io.adafruit.com
-  io.connect();
+  // io.connect();
 
   // wait for a connection
-  while(io.status() < AIO_CONNECTED) {
-    Serial.print(".");
-    delay(500);
-  }
+  // while(io.status() < AIO_CONNECTED) {
+  Serial.print(".");
+  delay(500);
 
-  // we are connected
-  Serial.println();
-  Serial.println(io.statusText());
-
-  //función PWM
+  // función PWM
   initPWM();
-
-  //setup de lectura ADC
-  setupAnalog();
-
-  //Entradas botones
-  //entradas botones
+  initPWMAmarillo();
+  initPWMRojo();
+  initPWMVerde();
+  // entradas botones
   pinMode(BOT1.boton1, INPUT_PULLUP);
   attachInterrupt(BOT1.boton1, handle_boton, RISING);
 
+  // salidas
+  pinMode(a, OUTPUT);
+  pinMode(b, OUTPUT);
+  pinMode(c, OUTPUT);
+  pinMode(d, OUTPUT);
+  pinMode(e, OUTPUT);
+  pinMode(f, OUTPUT);
+  pinMode(g, OUTPUT);
+
+  pinMode(d1, OUTPUT);
+  pinMode(d2, OUTPUT);
+  pinMode(d3, OUTPUT);
+
+  // estado inicial de salidas
+  digitalWrite(a, LOW);
+  digitalWrite(b, LOW);
+  digitalWrite(c, LOW);
+  digitalWrite(d, LOW);
+  digitalWrite(e, LOW);
+  digitalWrite(f, LOW);
+  digitalWrite(g, LOW);
+  ledcWrite(canalPWMRojo, 1023);
+        
 }
 
-void loop() {
-  io.run();
+void loop()
+{
+  // io.run();
 
+  // lectura de temperatura en mV y conversión a grados centígrados
+  temp_mV = analogRead(temp);
+  Serial.printf("temp: %f \n", temp_mV);
+  float mapTempmV = map(temp_mV, 0, 4095, 30, 40);
+  temp_exacta = mapTempmV / 10.0;
+
+  // Se multiplica el valor por 10, redondeando el valor para que al momento se divide 10, se consigo un decimal.
+  temp_final = round(temp_exacta * 10) / 10.0;
+
+  // Se convierto el valor de temperatura a un numero de 3 digitos.. ej: 35.4 a 354
+  int temp_entero = temp_final * 10;
+  // consigo primer numero de izquierda a derecha
+  int primer_D = (temp_entero / 100) % 10;
+  // segundo numero
+  int segundo_D = (temp_entero / 10) % 10;
+  // tercer numero
+  int tercer_D = (temp_entero) % 10;
+
+  if (BOT1.pressed != BOT1.lastState)
+  {
+    if (BOT1.pressed)
+    {
+      // estados de temperatura
+      if (temp_final > 37.0)
+      {
+        ledcWrite(canalPWMRojo, 1023);
+        z = 2;
+      }
+      else if (temp_final <= 37.5 && temp_final >= 37.0)
+      {
+        ledcWrite(canalPWMAmarillo, 1023);
+        z = 1;
+      }
+      else
+      {
+        ledcWrite(canalPWMVerde, 1023);
+        z = 0;
+      }
+      ledcWrite(canalPWM, servoPosition[z]);
+    }
+    BOT1.lastState = BOT1.pressed;
+  }
+
+  // mostrar primer numero utilizando la funciona mostrar digito
+  digitalWrite(d1, HIGH);
+  digitalWrite(d2, LOW);
+  digitalWrite(d3, LOW);
+  mostrarDigito(primer_D);
+  delay(5);
+
+  // mostrar segundo numero
+  digitalWrite(d1, LOW);
+  digitalWrite(d3, LOW);
+  digitalWrite(d2, HIGH);
+  mostrarDigito(segundo_D);
+  delay(5);
+
+  // mostrar tercer numero
+  digitalWrite(d1, LOW);
+  digitalWrite(d2, LOW);
+  digitalWrite(d3, HIGH);
+  mostrarDigito(tercer_D);
+  delay(5);
 }
 
-void initPWM(void){
+void initPWM(void)
+{
   ledcSetup(canalPWM, freqPWM, resPWM);
   ledcAttachPin(servoPin, canalPWM);
 }
 
-void setupAnalog(void){
-  analogSetWidth(12);
-  analogSetAttenuation(ADC_11db);
+void initPWMRojo(void)
+{
+  ledcSetup(canalPWMRojo, freqPWM, resPWM);
+  ledcAttachPin(ledRojo, canalPWMRojo);
+}
+
+void initPWMVerde(void)
+{
+  ledcSetup(canalPWMVerde, freqPWM, resPWM);
+  ledcAttachPin(ledVerde, canalPWMVerde);
+}
+
+void initPWMAmarillo(void)
+{
+  ledcSetup(canalPWMAmarillo, freqPWM, resPWM);
+  ledcAttachPin(ledAmarillo, canalPWMAmarillo);
+}
+
+void mostrarDigito(int numero)
+{
+  for (n = 0; n < 7; n++)
+  {
+    digitalWrite(valorPin1[n], valoresSeg[numero][n]);
+  }
 }

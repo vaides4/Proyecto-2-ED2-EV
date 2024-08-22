@@ -15,7 +15,7 @@ float temp_final = 0;
 #define ledAmarillo 25
 #define ledVerde 33
 
-#define temp 4
+#define temp 36
 
 // display
 #define a 18
@@ -54,9 +54,9 @@ byte valoresSeg[10][7] = {
     {1, 1, 1, 1, 0, 0, 1}, // 3
     {0, 1, 1, 0, 0, 1, 1}, // 4
     {1, 0, 1, 1, 0, 1, 1}, // 5
-    {1, 0, 1, 1, 1, 1, 0}, // 6
+    {1, 0, 1, 1, 1, 1, 1}, // 6
     {1, 1, 1, 0, 0, 0, 0}, // 7
-    {1, 1, 1, 1, 1, 1, 0}, // 8
+    {1, 1, 1, 1, 1, 1, 1}, // 8
     {1, 1, 1, 0, 0, 1, 1}, // 9
 };
 int n = 0;
@@ -116,6 +116,7 @@ void setup()
   initPWMAmarillo();
   initPWMRojo();
   initPWMVerde();
+
   // entradas botones
   pinMode(BOT1.boton1, INPUT_PULLUP);
   attachInterrupt(BOT1.boton1, handle_boton, RISING);
@@ -128,6 +129,7 @@ void setup()
   pinMode(e, OUTPUT);
   pinMode(f, OUTPUT);
   pinMode(g, OUTPUT);
+  pinMode(p, OUTPUT);
 
   pinMode(d1, OUTPUT);
   pinMode(d2, OUTPUT);
@@ -141,7 +143,8 @@ void setup()
   digitalWrite(e, LOW);
   digitalWrite(f, LOW);
   digitalWrite(g, LOW);
-  ledcWrite(canalPWMRojo, 1023);
+
+  //ledcWrite(canalPWMRojo, 1023);
         
 }
 
@@ -167,7 +170,7 @@ void loop()
   // tercer numero
   int tercer_D = (temp_entero) % 10;
 
-    Serial.printf("temp: %f, boton : %u \n", temp_final, BOT1);
+  Serial.printf("temp_mV: %f, tempmap: %f, boton : %u \n", temp_mV, mapTempmV, BOT1);
 
   if (BOT1.pressed != BOT1.lastState)
   {
@@ -203,6 +206,7 @@ void loop()
   digitalWrite(d1, HIGH);
   digitalWrite(d2, LOW);
   digitalWrite(d3, LOW);
+  digitalWrite(p, LOW);
   mostrarDigito(primer_D);
   delay(5);
 
@@ -210,6 +214,7 @@ void loop()
   digitalWrite(d1, LOW);
   digitalWrite(d3, LOW);
   digitalWrite(d2, HIGH);
+  digitalWrite(p, HIGH);
   mostrarDigito(segundo_D);
   delay(5);
 
@@ -217,6 +222,7 @@ void loop()
   digitalWrite(d1, LOW);
   digitalWrite(d2, LOW);
   digitalWrite(d3, HIGH);
+  digitalWrite(p, LOW);
   mostrarDigito(tercer_D);
   delay(5);
 }

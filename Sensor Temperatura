@@ -57,7 +57,7 @@ byte valoresSeg[10][7] = {
     {1, 0, 1, 1, 1, 1, 1}, // 6
     {1, 1, 1, 0, 0, 0, 0}, // 7
     {1, 1, 1, 1, 1, 1, 1}, // 8
-    {1, 1, 1, 0, 0, 1, 1}, // 9
+    {1, 1, 1, 1, 0, 1, 1}, // 9
 };
 int n = 0;
 
@@ -170,7 +170,8 @@ void loop()
   // tercer numero
   int tercer_D = (temp_entero) % 10;
 
-  Serial.printf("temp_mV: %f, tempmap: %f, boton : %u \n", temp_mV, mapTempmV, BOT1);
+  //Serial.printf("temp map: %f, temp final: %f, boton : %u \n", mapTempmV, temp_final, BOT1);
+  Serial.println(BOT1.pressed);
 
   if (BOT1.pressed != BOT1.lastState)
   {
@@ -198,6 +199,7 @@ void loop()
         z = 0;
       }
       ledcWrite(canalPWM, servoPosition[z]);
+      BOT1.pressed = false;
     }
     BOT1.lastState = BOT1.pressed;
   }
@@ -258,3 +260,4 @@ void mostrarDigito(int numero)
     digitalWrite(valorPin1[n], valoresSeg[numero][n]);
   }
 }
+

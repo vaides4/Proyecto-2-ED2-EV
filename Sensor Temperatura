@@ -151,12 +151,12 @@ void loop()
 
   // lectura de temperatura en mV y conversión a grados centígrados
   temp_mV = analogRead(temp);
-  Serial.printf("temp: %f \n", temp_mV);
   float mapTempmV = map(temp_mV, 0, 4095, 30, 40);
-  temp_exacta = mapTempmV / 10.0;
+  //temp_exacta = mapTempmV / 10.0;
 
   // Se multiplica el valor por 10, redondeando el valor para que al momento se divide 10, se consigo un decimal.
-  temp_final = round(temp_exacta * 10) / 10.0;
+  //temp_final = round(temp_exacta * 10) / 10.0;
+  temp_final = round(mapTempmV * 10) / 10.0;
 
   // Se convierto el valor de temperatura a un numero de 3 digitos.. ej: 35.4 a 354
   int temp_entero = temp_final * 10;
@@ -167,6 +167,8 @@ void loop()
   // tercer numero
   int tercer_D = (temp_entero) % 10;
 
+    Serial.printf("temp: %f, boton : %u \n", temp_final, BOT1);
+
   if (BOT1.pressed != BOT1.lastState)
   {
     if (BOT1.pressed)
@@ -175,15 +177,20 @@ void loop()
       if (temp_final > 37.0)
       {
         ledcWrite(canalPWMRojo, 1023);
+        ledcWrite(canalPWMAmarillo, 0);
+        ledcWrite(canalPWMVerde, 0);
         z = 2;
       }
       else if (temp_final <= 37.5 && temp_final >= 37.0)
       {
+        ledcWrite(canalPWMRojo, 0);
         ledcWrite(canalPWMAmarillo, 1023);
         z = 1;
       }
       else
       {
+        ledcWrite(canalPWMRojo, 0);
+        ledcWrite(canalPWMAmarillo, 0);
         ledcWrite(canalPWMVerde, 1023);
         z = 0;
       }

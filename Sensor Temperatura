@@ -10,6 +10,9 @@ float temp_mV = 0;
 float temp_exacta = 0;
 float temp_final = 0;
 
+// set up the 'counter' feed
+AdafruitIO_Feed *tempCanal = io.feed("Temperatura");
+
 // Leds
 #define ledRojo 26
 #define ledAmarillo 25
@@ -62,7 +65,7 @@ byte valoresSeg[10][7] = {
 int n = 0;
 
 // valores a los que se moverá el servo
-int servoPosition[] = {51, 77, 128};
+int servoPosition[] = {0, 53, 103, 135};
 int z = 0;
 
 // Interrupción motor
@@ -72,7 +75,7 @@ struct Boton1
   bool pressed;
   bool lastState;
 };
-Boton1 BOT1 = {35, false, false};
+Boton1 BOT1 = {32, false, false};
 
 // variables de handle interrupcion
 void IRAM_ATTR handle_boton()
@@ -154,7 +157,7 @@ void loop()
 
   // lectura de temperatura en mV y conversión a grados centígrados
   temp_mV = analogRead(temp);
-  float mapTempmV = map(temp_mV, 0, 4095, 30, 40);
+  float mapTempmV = map(temp_mV, 0, 4095, 30.0, 40.0);
   //temp_exacta = mapTempmV / 10.0;
 
   // Se multiplica el valor por 10, redondeando el valor para que al momento se divide 10, se consigo un decimal.
@@ -183,22 +186,23 @@ void loop()
         ledcWrite(canalPWMRojo, 1023);
         ledcWrite(canalPWMAmarillo, 0);
         ledcWrite(canalPWMVerde, 0);
-        z = 2;
+        z = 3;
       }
       else if (temp_final <= 37.5 && temp_final >= 37.0)
       {
         ledcWrite(canalPWMRojo, 0);
         ledcWrite(canalPWMAmarillo, 1023);
-        z = 1;
+        z = 2;
       }
       else
       {
         ledcWrite(canalPWMRojo, 0);
         ledcWrite(canalPWMAmarillo, 0);
         ledcWrite(canalPWMVerde, 1023);
-        z = 0;
+        z = 1;
       }
       ledcWrite(canalPWM, servoPosition[z]);
+      tempCanal->save(temp_final);
       BOT1.pressed = false;
     }
     BOT1.lastState = BOT1.pressed;
@@ -260,4 +264,3 @@ void mostrarDigito(int numero)
     digitalWrite(valorPin1[n], valoresSeg[numero][n]);
   }
 }
-

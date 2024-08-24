@@ -65,7 +65,7 @@ byte valoresSeg[10][7] = {
 int n = 0;
 
 // valores a los que se moverá el servo
-int servoPosition[] = {0, 53, 103, 135};
+int servoPosition[] = {0, 53, 77, 103};
 int z = 0;
 
 // Interrupción motor
@@ -102,17 +102,18 @@ void setup()
   Serial.begin(115200);
 
   // wait for serial monitor to open
-  // while(! Serial);
+  while(! Serial);
 
   Serial.print("Connecting to Adafruit IO");
 
   // connect to io.adafruit.com
-  // io.connect();
+  io.connect();
 
   // wait for a connection
-  // while(io.status() < AIO_CONNECTED) {
-  Serial.print(".");
-  delay(500);
+  while(io.status() < AIO_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
 
   // función PWM
   initPWM();
@@ -153,8 +154,6 @@ void setup()
 
 void loop()
 {
-  // io.run();
-
   // lectura de temperatura en mV y conversión a grados centígrados
   temp_mV = analogRead(temp);
   float mapTempmV = map(temp_mV, 0, 4095, 30.0, 40.0);
@@ -174,12 +173,13 @@ void loop()
   int tercer_D = (temp_entero) % 10;
 
   //Serial.printf("temp map: %f, temp final: %f, boton : %u \n", mapTempmV, temp_final, BOT1);
-  Serial.println(BOT1.pressed);
+  //Serial.println(BOT1.pressed);
 
   if (BOT1.pressed != BOT1.lastState)
   {
     if (BOT1.pressed)
     {
+      io.run();
       // estados de temperatura
       if (temp_final > 37.0)
       {

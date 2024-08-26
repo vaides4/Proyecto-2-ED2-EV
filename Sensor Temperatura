@@ -159,12 +159,12 @@ void loop()
   tempLectura = analogRead(temp);
 
   //Codigo para hacer lectura con potenciometro simulando valores
-  temp_final = map(tempLectura, 0, 4095, 30.0, 40.0);
+  //temp_final = map(tempLectura, 0, 4095, 30.0, 40.0);
 
   //codigo para uso de sensor
   //conversion de lectura de mV a grados celsius
-  //tempConversion = ((tempLectura * 3.3)/4095.0);
-  //temp_final = tempConversion * 100.0;
+  tempConversion = ((tempLectura * 3.3)/4095.0);
+  temp_final = tempConversion * 100.0;
 
   // Se convierto el valor de temperatura a un numero de 3 digitos.. ej: 35.4 a 354
   int temp_entero = temp_final * 10;

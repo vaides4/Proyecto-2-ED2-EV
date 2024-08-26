@@ -20,6 +20,7 @@ AdafruitIO_Feed *tempCanal = io.feed("Temperatura");
 #define ledAmarillo 25
 #define ledVerde 33
 
+//sensor pin
 #define temp 36
 
 // display
@@ -183,7 +184,7 @@ void loop()
     if (BOT1.pressed)
     {
       io.run();
-      // estados de temperatura
+      // estados de temperatura y sus distintas salidas
       if (temp_final > 37.5)
       {
         ledcWrite(canalPWMRojo, 1023);
@@ -205,7 +206,9 @@ void loop()
         ledcWrite(canalPWMVerde, 1023);
         z = 3;
       }
+      //mover servo
       ledcWrite(canalPWMServo, servoPosition[z]);
+      //enviar valor a adafruit
       tempCanal->save(temp_final);
       BOT1.pressed = false;
     }
@@ -237,30 +240,35 @@ void loop()
   delay(5);
 }
 
+//funcion PWM servo
 void initPWMServo(void)
 {
   ledcSetup(canalPWMServo, freqPWM, resPWM);
   ledcAttachPin(servoPin, canalPWMServo);
 }
 
+//funcion PWM led rojo
 void initPWMRojo(void)
 {
   ledcSetup(canalPWMRojo, freqPWM, resPWM);
   ledcAttachPin(ledRojo, canalPWMRojo);
 }
 
+//funcion PWM led verde
 void initPWMVerde(void)
 {
   ledcSetup(canalPWMVerde, freqPWM, resPWM);
   ledcAttachPin(ledVerde, canalPWMVerde);
 }
 
+//funcion PWM Led amarillo
 void initPWMAmarillo(void)
 {
   ledcSetup(canalPWMAmarillo, freqPWM, resPWM);
   ledcAttachPin(ledAmarillo, canalPWMAmarillo);
 }
 
+//funcion de mostrar digito en display
 void mostrarDigito(int numero)
 {
   for (n = 0; n < 7; n++)
